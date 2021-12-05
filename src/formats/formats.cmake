@@ -48,6 +48,7 @@ set(formats_compchem
       molproformat
       mopacformat
       nwchemformat
+      psi4format
       pwscfformat
       qchemformat
       siestaformat
