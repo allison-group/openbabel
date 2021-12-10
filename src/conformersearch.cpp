@@ -71,8 +71,8 @@ namespace OpenBabel {
         if (!m_check_hydrogens  && (atom1->GetAtomicNum() == OBElements::Hydrogen || atom2->GetAtomicNum() == OBElements::Hydrogen ))
           continue;
 
-        // skip connected atoms
-        if (atom1->IsConnected(atom2))
+        // skip connected and 1-3 atoms
+        if (atom1->IsConnected(atom2) || atom1->IsOneThree(atom2))
           continue;
         // compute the distance
         dx = conformer[a1*3  ] - conformer[a2*3  ];
