@@ -116,6 +116,8 @@ namespace OpenBabel {
       OBStericConformerFilter ();
       OBStericConformerFilter (double cutoff, double vdw_factor = 0.5, bool check_hydrogens = true);
       bool IsGood(const OBMol &mol, const RotorKey &key, double *coords);
+    
+      static double CalculateScalingFactor(const OBMol &mol);
     private:
       double m_cutoff; //!< Internal cutoff (used as a squared distance)
       double m_vdw_factor;		//!< Factor applied to Van der Waals distance check

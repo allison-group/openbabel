@@ -95,6 +95,28 @@ namespace OpenBabel {
     return true;
   }
 
+double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
+  double count = 0.0, tally = 0.0, strict_scaling = 0.9, loose_scaling = 0.7;
+  double scaling_delta = strict_scaling - loose_scaling;
+  double high_steric = 4.0, low_steric = 2.0, steric_delta = high_steric - low_steric;
+  OBAtom *atom = nullptr;
+  unsigned int numAtoms = mol.NumAtoms();
+  
+  for (unsigned int a = 0; a < numAtoms; ++a) {
+    atom = mol.GetAtom(a + 1);
+    unsigned int hvy_val = atom->GetHvyDegree();
+    if (hvy_val > 1) {
+      count += 1;
+      tally += hvy_val;
+    }
+  }
+  
+  double average_steric = tally / count;
+  double steric_percent = (average_steric - low_steric) / steric_delta;
+  double scaling_percent = 1.0 - steric_percent;
+  double scaling = loose_scaling + (scaling_percent * scaling_delta);
+  return scaling;
+}
   //////////////////////////////////////////////////////////
   //
   //  OBConformerScore(s)
