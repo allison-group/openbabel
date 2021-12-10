@@ -1,0 +1,2 @@
+export TMPPATH=/usr/local/Frameworks/Python.framework/Versions/Current
+cmake .. -DRUN_SWIG=ON -DBUILD_GUI=OFF -DPYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=${TMPPATH}/bin/python3.9 -DPYTHON_INCLUDE_DIR=${TMPPATH}/include/python3.9 -DPYTHON_LIBRARY=${TMPPATH}/lib/libpython3.9.dylib
