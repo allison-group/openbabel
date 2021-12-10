@@ -17,3 +17,6 @@ install
 
 # editors
 .vscode
+
+# macos stuffs
+.DS_Store
