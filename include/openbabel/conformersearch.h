@@ -282,9 +282,11 @@ namespace OpenBabel {
        *        when generating the next generation.
        * @param convergence The number of identical generations before considering
        *        the process converged.
+       * @param maxGenerations The maximum number of generations to preform before
+       *        quitting, regardless of the convergence state.
        */
       bool Setup(const OBMol &mol, int numConformers = 30, int numChildren = 5,
-          int mutability = 5, int convergence = 25);
+          int mutability = 5, int convergence = 25, int maxGenerations = 0);
       /**
        * Set the number of conformers.
        */
@@ -302,6 +304,11 @@ namespace OpenBabel {
        * before considering the iteration converged).
        */
       void SetConvergence(int convergence) { m_convergence = convergence; }
+      /**
+       * Set the maximum number of generations to perform. Will exit once this number has
+       * been reached regardless of convergence state. Setting to 0 means no limit.
+       */
+      void SetMaxGenerations(int maxGenerations) { m_maxGenerations = maxGenerations; }
       /**
        * Set the bonds to be fixed.
        */
@@ -438,6 +445,7 @@ namespace OpenBabel {
       int m_numChildren; //!< The number of children generated each generation
       int m_mutability; //!< The mutability for generating the next generation
       int m_convergence; //!< Number of generations that remain unchanged before quiting
+      int m_maxGenerations; //!< Maximum number of generations to perform, regardless of convergence
       
       std::vector<double> vscores;                    //!< Current population score vector
       std::vector<double> vshared_fitnes;             //!< Current population shared fitness vector

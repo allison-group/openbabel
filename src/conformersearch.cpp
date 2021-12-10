@@ -301,6 +301,7 @@ namespace OpenBabel {
     m_numConformers = 30;
     m_numChildren = 5;
     m_mutability = 10;
+    m_maxGenerations = 0;
     // Set some inital values here, but will fine-tune some in the molecule Setup
     use_sharing = false;
     alpha_share = 2.0;
@@ -328,7 +329,7 @@ namespace OpenBabel {
   }
 
 
-  bool OBConformerSearch::Setup(const OBMol &mol, int numConformers, int numChildren, int mutability, int convergence)
+  bool OBConformerSearch::Setup(const OBMol &mol, int numConformers, int numChildren, int mutability, int convergence, int maxGenerations)
   {
     int nb_rotors = 0;
     // copy some variables
@@ -337,6 +338,7 @@ namespace OpenBabel {
     m_numChildren = numChildren;
     m_mutability = mutability;
     m_convergence = convergence;
+    m_maxGenerations = maxGenerations;
 
     if (m_mol.GetCoordinates() == nullptr)
       return false;
@@ -586,6 +588,7 @@ namespace OpenBabel {
   void OBConformerSearch::Search()
   {
     int identicalGenerations = 0;
+    int maxGenerations = m_maxGenerations > 0 ? m_maxGenerations : 1000;
     double last_score = 0.0, score = 0.0;
 
     if (m_logstream != nullptr)
@@ -616,7 +619,7 @@ namespace OpenBabel {
     if (use_sharing)
       score_population ();
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < m_maxGenerations; i++) {
       // keep copy of rotor keys if next generation is less fit
       RotorKeys rotorKeys = m_rotorKeys;
 
