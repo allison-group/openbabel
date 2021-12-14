@@ -288,7 +288,7 @@ namespace OpenBabel {
        *        quitting, regardless of the convergence state.
        */
       bool Setup(const OBMol &mol, int numConformers = 30, int numChildren = 5,
-          int mutability = 5, int convergence = 25, int maxGenerations = 0);
+          int mutability = 5, int convergence = 25, int maxGenerations = 0, int tries = 1000);
       /**
        * Set the number of conformers.
        */
@@ -327,8 +327,9 @@ namespace OpenBabel {
        */
       void SetFilter(OBConformerFilter *filter)
       {
-        delete m_filter;
+        if (m_filter_owned) delete m_filter;
         m_filter = filter;
+        m_filter_owned = false;
       }
       /**
        * All acceptable conformers are scored to select the fittest conformers from
@@ -341,7 +342,9 @@ namespace OpenBabel {
        */
       void SetScore(OBConformerScore *score)
       {
+        if (m_score_owned) delete m_score;
         m_score = score;
+        m_score_owned = false;
       }
 
       /**
@@ -471,6 +474,8 @@ namespace OpenBabel {
 
       OBConformerFilter *m_filter;
       OBConformerScore  *m_score;
+    bool m_filter_owned;
+    bool m_score_owned;
 
       std::ostream *m_logstream;	//!< A pointer to a log stream (NULL means no loogging)
   };

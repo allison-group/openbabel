@@ -71,20 +71,28 @@ namespace OpenBabel {
         if (!m_check_hydrogens  && (atom1->GetAtomicNum() == OBElements::Hydrogen || atom2->GetAtomicNum() == OBElements::Hydrogen ))
           continue;
 
-        // skip connected and 1-3 atoms
-        if (atom1->IsConnected(atom2) || atom1->IsOneThree(atom2))
+        // skip connected, 1-3 and 1-4 atoms
+        if (atom1->IsConnected(atom2) || atom1->IsOneThree(atom2) || atom1->IsOneFour(atom2))
           continue;
         // compute the distance
         dx = conformer[a1*3  ] - conformer[a2*3  ];
         dy = conformer[a1*3+1] - conformer[a2*3+1];
         dz = conformer[a1*3+2] - conformer[a2*3+2];
         distanceSquared = dx*dx + dy*dy + dz*dz;
+        // Choose the correct scaling to account for H-bonding
+        double pair_scale = m_vdw_factor;
+        if (pair_scale > 0.7) {
+          if ((atom1->IsHbondDonorH() && atom2->IsHbondAcceptor()) ||
+              (atom2->IsHbondDonorH() && atom1->IsHbondAcceptor())) {
+            pair_scale = 0.7;
+          }
+        }
+        
         // As we don't check 1-3 and 1-4 bonded atoms, apply a
         // factor of to the sum of VdW radii
-        vdwCutoff = m_vdw_factor * (OBElements::GetVdwRad(atom1->GetAtomicNum())
+        vdwCutoff = pair_scale * (OBElements::GetVdwRad(atom1->GetAtomicNum())
                                     + OBElements::GetVdwRad(atom2->GetAtomicNum()));
         vdwCutoff *= vdwCutoff; // compare squared distances
-        //std::cout << vdwCutoff << " " << m_vdw_factor << " " << m_cutoff << " " << distanceSquared << std::endl;
 
         // check distance
         if (distanceSquared < m_cutoff || distanceSquared < vdwCutoff)
@@ -319,6 +327,8 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
   {
     m_filter = static_cast<OBConformerFilter*>(new OBStericConformerFilter());
     m_score = static_cast<OBConformerScore*>(new OBRMSDConformerScore());
+    m_filter_owned = true;
+    m_score_owned = true;
     //m_score = static_cast<OBConformerScore*>(new OBEnergyConformerScore());
     m_numConformers = 30;
     m_numChildren = 5;
@@ -346,12 +356,13 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
 
   OBConformerSearch::~OBConformerSearch()
   {
-    delete m_filter;
+    if (m_filter_owned) delete m_filter;
+    if (m_score_owned) delete m_score;
     delete (OBRandom*)d;
   }
 
 
-  bool OBConformerSearch::Setup(const OBMol &mol, int numConformers, int numChildren, int mutability, int convergence, int maxGenerations)
+  bool OBConformerSearch::Setup(const OBMol &mol, int numConformers, int numChildren, int mutability, int convergence, int maxGenerations, int attempts)
   {
     int nb_rotors = 0;
     // copy some variables
@@ -426,7 +437,7 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
     }
 
     int tries = 0, ndup = 0, nbad = 0;
-    while (m_rotorKeys.size() < m_numConformers && tries < numConformers * 1000) {
+    while (m_rotorKeys.size() < m_numConformers && tries < numConformers * attempts) {
       tries++;
       // perform random mutation(s)
       OBRotorIterator ri;
@@ -456,13 +467,9 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
       {
         (*m_logstream) << "Initial conformer count: " << m_rotorKeys.size() << std::endl;
         (*m_logstream) << tries << " attempts,  " << ndup << " duplicates, " << nbad << " failed filter." << std::endl;
-        for (unsigned int i = 0; i < m_rotorKeys.size(); ++i) {
-          for (unsigned int j = 1; j < m_rotorKeys[i].size(); ++j)
-            (*m_logstream) << m_rotorKeys[i][j] << " ";
-          (*m_logstream) << std::endl;
-        }
       }
-
+    
+    
     // Setup some default values for dynamic niche sharing according to the molecule.
     nb_niches = (m_rotorKeys.size()) / 10;
     if (nb_niches < 3)
@@ -474,7 +481,8 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
     if (niche_radius < 1.0)
       niche_radius = 1.0;
 
-    return true;
+    // If not initial conformers, can't go on
+    return m_rotorKeys.size() > 0;
   }
 
   void OBConformerSearch::NextGeneration()
@@ -705,15 +713,6 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
       if (identicalGenerations > m_convergence)
         break;
     }
-
-    if (m_logstream != nullptr)
-      {
-        for (unsigned int i = 0; i < m_rotorKeys.size(); ++i) {
-          for (unsigned int j = 1; j < m_rotorKeys[i].size(); ++j)
-            (*m_logstream) << m_rotorKeys[i][j] << " ";
-          (*m_logstream) << std::endl;
-        }
-      }
   }
 
   void OBConformerSearch::GetConformers(OBMol &mol)
@@ -722,16 +721,15 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
     rotamers.SetBaseCoordinateSets(mol);
     rotamers.Setup(mol, m_rotorList);
 
-    std::cout << "GetConformers:" << std::endl;
     // Add all (parent + children) unique rotor keys
     for (unsigned int i = 0; i < m_rotorKeys.size(); ++i) {
       rotamers.AddRotamer(m_rotorKeys[i]);
-
-      for (unsigned int j = 1; j < m_rotorKeys[i].size(); ++j)
-        std::cout << m_rotorKeys[i][j] << " ";
-      std::cout << std::endl;
     }
 
+    if (m_logstream != nullptr) {
+      (*m_logstream) << "Total of " << m_rotorKeys.size() << " conformers generated." << std::endl;
+    }
+    
     // Get conformers for the rotor keys
     std::vector<double*> conformers;
     rotamers.ExpandConformerList(mol, conformers);
