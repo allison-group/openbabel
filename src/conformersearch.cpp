@@ -346,7 +346,7 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
     // For the moment 'd' is an opaque pointer to an instance of OBRandom*.
     // In future, it could be a pointer to a structure storing all of the
     // private variables.
-    d = (void*)new OBRandom();
+    d = (void*)new OBRandom(true);
     ((OBRandom*)d)->TimeSeed();
     m_logstream = &std::cout; 	// Default logging send to standard output
     // m_logstream = NULL;
@@ -425,7 +425,7 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
     }
 
     // create initial population
-    OBRandom generator;
+    OBRandom generator(true);
     generator.TimeSeed();
 
     RotorKey rotorKey(m_rotorList.Size() + 1, 0); // indexed from 1
@@ -488,7 +488,7 @@ double OBStericConformerFilter::CalculateScalingFactor(const OBMol &mol) {
   void OBConformerSearch::NextGeneration()
   {
     // create next generation population
-    OBRandom generator;
+    OBRandom generator(true);
     generator.TimeSeed();
 
     // generate the children

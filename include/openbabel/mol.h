@@ -610,6 +610,7 @@ enum HydrogenType { AllHydrogen, PolarHydrogen, NonPolarHydrogen };
     void    SetConformers(std::vector<double*> &v);
     //! Add a new set of coordinates @p f as a new conformer
     void    AddConformer(double *f)    {  _vconf.push_back(f);    }
+    void    AddConformerPython(double *f);
     //! Set the molecule's current conformer to @p i
     //! Does nothing if @p i is larger than NumConformers()
     void    SetConformer(unsigned int i);

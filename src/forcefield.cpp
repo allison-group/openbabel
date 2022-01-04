@@ -20,6 +20,7 @@ GNU General Public License for more details.
 #include <openbabel/babelconfig.h>
 
 #include <set>
+#include <algorithm>
 
 #include <openbabel/forcefield.h>
 
@@ -1426,6 +1427,16 @@ namespace OpenBabel
     return true;
   }
 
+  std::ostream& operator<<(std::ostream& os, const std::vector<int>& key) {
+    os << "[";
+    for (int i = 0; i < key.size(); ++i) {
+      os << key[i];
+      if (i != key.size() - 1) os << ", ";
+    }
+    os << "]\n";
+    return os;
+  }
+
   void OBForceField::RandomRotorSearchInitialize(unsigned int conformers, unsigned int geomSteps,
                                                  bool sampleRingBonds)
   {
@@ -1437,7 +1448,7 @@ namespace OpenBabel
     OBRotorIterator ri;
     OBRotor *rotor;
 
-    OBRandom generator;
+    OBRandom generator(true);
     generator.TimeSeed();
     _origLogLevel = _loglvl;
 
@@ -1478,6 +1489,7 @@ namespace OpenBabel
     }
 
     std::vector<int> rotorKey(rl.Size() + 1, 0); // indexed from 1
+    std::set<std::vector<int>> addedKeys;
 
     for (unsigned int c = 0; c < conformers; ++c) {
       rotor = rl.BeginRotor(ri);
@@ -1485,7 +1497,10 @@ namespace OpenBabel
         // foreach rotor
         rotorKey[i] = generator.NextInt() % rotor->GetResolution().size();
       }
-      rotamers.AddRotamer(rotorKey);
+      // Only add rotor key if it isn't already added
+      if (addedKeys.insert(rotorKey).second) {
+        rotamers.AddRotamer(rotorKey);
+      }
     }
 
     rotamers.ExpandConformerList(_mol, _mol.GetConformers());

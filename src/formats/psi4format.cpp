@@ -32,6 +32,7 @@ namespace OpenBabel
     PSI4Format()
     {
       OBConversion::RegisterFormat("psi",this);
+      OBConversion::RegisterFormat("psi4",this);
     }
 
     virtual const char* Description() //required
@@ -74,8 +75,9 @@ namespace OpenBabel
     ostream &ofs = *pConv->GetOutStream();
     OBMol &mol = *pmol;
 
-    ofs << "molecule openbabel {\n";
+    ofs << "molecule " << pmol->GetTitle() << " {\n";
     ofs << "  " << pmol->GetTotalCharge() << "  " << pmol->GetTotalSpinMultiplicity() << '\n';
+    ofs << "# Unoptimised Energy: " << pmol->GetEnergy() << '\n';
 
     char buffer[BUFF_SIZE];
     vector<OBAtom*>::iterator i;
@@ -100,6 +102,8 @@ namespace OpenBabel
     ofs << "set opt_coordinates both\n"
         << "energy, wfn = optimize(\"b3lyp\", return_wfn = True)\n"
         << "fchk(wfn, \"" << pmol->GetTitle() << ".fchk\")\n";
+
+
 
     return(true);
   }

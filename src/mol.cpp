@@ -3695,6 +3695,12 @@ namespace OpenBabel
     return energies[ci];
   }
 
+  void OBMol::AddConformerPython(double* c) {
+    double *nc = new double[3 * NumAtoms()];
+    memcpy((char*)nc, (char*)c, sizeof(double) * 3 * NumAtoms());
+    _vconf.push_back(nc);
+  }
+
   void OBMol::SetConformers(vector<double*> &v)
   {
     vector<double*>::iterator i;
@@ -3708,8 +3714,9 @@ namespace OpenBabel
 
   void OBMol::SetConformer(unsigned int i)
   {
-    if (i < _vconf.size())
+    if (i < _vconf.size()) {
       _c = _vconf[i];
+    }
   }
 
   void OBMol::CopyConformer(double *c,int idx)
