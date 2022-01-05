@@ -46,6 +46,13 @@ namespace OpenBabel {
     m_check_hydrogens = true;
   }
 
+  OBStericConformerFilter::OBStericConformerFilter(const OBStericConformerFilter& other)
+  {
+    m_cutoff = other.m_cutoff;
+    m_vdw_factor = other.m_vdw_factor;
+    m_check_hydrogens = other.m_check_hydrogens;
+  }
+
   OBStericConformerFilter::OBStericConformerFilter (double cutoff, double vdw_factor, bool check_hydrogens)
   {
     m_cutoff = cutoff * cutoff;

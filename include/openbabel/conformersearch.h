@@ -114,6 +114,7 @@ namespace OpenBabel {
   {
     public:
       OBStericConformerFilter ();
+      OBStericConformerFilter(const OBStericConformerFilter& other);
       OBStericConformerFilter (double cutoff, double vdw_factor = 0.5, bool check_hydrogens = true);
       bool IsGood(const OBMol &mol, const RotorKey &key, double *coords);
     
